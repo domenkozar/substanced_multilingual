@@ -1,0 +1,2 @@
+graft substanced_multilingual
+include *.cfg *.rst *.in LICENSE
