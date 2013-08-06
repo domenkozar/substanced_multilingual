@@ -1,7 +1,6 @@
-# TODO: add a view that returns content based on route matching
+from pyramid.exceptions import ConfigurationError
 
 from .resources import TranslatableContent
-from .resources import TranslatableFolder
 
 
 def add_multilingual_language(config,
@@ -11,18 +10,13 @@ def add_multilingual_language(config,
     TODO
     """
 
-    def register():
-        # setup routes
-        config.add_route(language_code, '/{}*traverse'.format(language_code))
+    # setup routes
+    config.add_route(language_code, '/{}*traverse'.format(language_code))
 
-        # add language to registry
-        if getattr(config.registry, 'languages', None) is None:
-            config.registry.languages = []
-        # TODO: pass in language_name and use it when adding new content
-        config.registry.languages.append(language_code)
-        #config.registry.registerUtility(languagecode,
-        #                                IMultilingualLanguage,
-        #                                name=name)
+    # add language to registry
+    if getattr(config.registry, 'languages', None) is None:
+        config.registry.languages = []
+    config.registry.languages.append((language_code, language_name))
 
     discriminator = ('multilingual-language', language_code)
     intr = config.introspectable(
@@ -34,42 +28,60 @@ def add_multilingual_language(config,
     intr['language_code'] = language_code
     intr['language_name'] = language_name
 
-    config.action(discriminator, callable=register, introspectables=(intr,))
+    config.action(discriminator, introspectables=(intr,))
 
 
 def add_multilingual_content(config,
-                             name,
-                             folder_cls=TranslatableFolder,
-                             content_cls=TranslatableContent,
-                             sheets=tuple()):
+                             content_type,
+                             factory,
+                             language_factory=TranslatableContent,
+                             language_propertysheets=tuple(),
+                             **meta):
     """
     TODO
     """
-    def register():
-        # TODO: register folder_cls
 
-        for language_code in config.registry.languages:
-            config.add_content_type(
-                language_code + "_" + name,
-                content_cls,
-                icon='icon-flag',
-                propertysheets=sheets,
-            )
+    config.add_content_type(
+        content_type,
+        factory,
+        **meta)
 
-    discriminator = ('multilingual-content', name, content_cls)
-    intr = config.introspectable(
-        'multilingual language contents',
-        discriminator,
-        content_cls,
-        'multilingual language content',
+    if not getattr(config.registry, 'languages', None):
+        raise ConfigurationError("You have to define languages to have multilingual content")
+
+    for language_code, language_name in config.registry.languages:
+        language_content_type = content_type + "_" + language_code
+        config.add_content_type(
+            language_content_type,
+            language_factory,
+            factory_type=content_type + "_" + language_code,
+            name=language_name,
+            icon='icon-flag',
+            propertysheets=language_propertysheets,
+            add_view="add_multilingual_content",
         )
 
-    config.action(discriminator, callable=register,
-                  introspectables=(intr,), order=1)
+    discriminator = ('multilingual-content', content_type, factory)
+
+    # TODO: see if we need other introspectables than content types
+    #intr = config.introspectable(
+    #    'multilingual language contents',
+    #    discriminator,
+    #    factory,
+    #    'multilingual language content',
+    #    )
+
+    config.action(discriminator)
+
+
+# TODO: declarative multilingual content
+#class multilingual_content(content):
+#    """
+#    """
 
 
 def includeme(config):
-    """ This function returns a Pyramid WSGI application.
+    """
     """
     config.add_directive('add_multilingual_language',
                          add_multilingual_language)
