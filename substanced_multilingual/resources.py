@@ -25,10 +25,15 @@ class TranslatableFolder(Folder):
         """Add languages as addable content with schema defined for the content type"""
         registry = get_current_registry()
         content_type = registry.content.typeof(context)
+
         for language_code, language_name in registry.languages:
+            # check if instance already exists in the context
+            if context.get(language_code, None):
+                continue
+
             if content_type + "_" + language_code == introspectable['content_type']:
                 return True
 
-    def get_translated_content(self):
+    def get_translation(self, request, language=None):
         """Returns content in language supplied by traversal info"""
         import pdb;pdb.set_trace()
