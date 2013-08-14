@@ -6,6 +6,7 @@ from substanced.folder import Folder
 
 from persistent import Persistent
 from pyramid.threadlocal import get_current_registry
+from pyramid.threadlocal import get_current_request
 
 from .interfaces import ITranslatableFolder, ITranslatableContent
 
@@ -34,6 +35,8 @@ class TranslatableFolder(Folder):
             if content_type + "_" + language_code == introspectable['content_type']:
                 return True
 
-    def get_translation(self, request, language=None):
+    def get_translation(self, language=None):
         """Returns content in language supplied by traversal info"""
-        import pdb;pdb.set_trace()
+        request = get_current_request()
+        language = language or request.matched_route.name
+        return self.get(language)

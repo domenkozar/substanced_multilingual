@@ -50,6 +50,7 @@ class MultilingualRegistry(object):
 def add_multilingual_content(config,
                              content_type,
                              factory,
+                             interface,
                              language_factory=TranslatableContent,
                              language_propertysheets=tuple(),
                              language_schema=None,
@@ -86,7 +87,7 @@ def add_multilingual_content(config,
         # add addable view for the content type
         config.add_mgmt_view(
             AddTranslationView,
-            context=ITranslatableFolder,
+            context=interface,
             name='add_multilingual_content_{}'.format(language_code),
             tab_title='Add Translation',
             permission='sdi.add-content',
